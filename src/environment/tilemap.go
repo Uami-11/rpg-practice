@@ -1,4 +1,5 @@
-package main
+// Package environment... whatsup
+package environment
 
 import (
 	"encoding/json"
@@ -6,13 +7,13 @@ import (
 )
 
 type TilemapLayerJSON struct {
-	data   []int `json: "data"`
-	width  int   `json: "width"`
-	height int   `json: "height"`
+	Data   []int `json:"data"`
+	Width  int   `json:"width"`
+	Height int   `json:"height"`
 }
 
 type TilemapJSON struct {
-	Tilemap []TilemapLayerJSON `json: "layers"`
+	Layers []TilemapLayerJSON `json:"layers"`
 }
 
 func NewTilemapJSON(filepath string) (*TilemapJSON, error) {

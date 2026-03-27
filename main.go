@@ -3,38 +3,22 @@ package main
 import (
 	// "fmt"
 	"image"
-	"image/color"
 	"log"
+
+	"rpg/src/characters"
+	"rpg/src/environment"
+	// "image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-type Sprite struct {
-	Img  *ebiten.Image
-	X, Y float64
-}
-
-type Player struct {
-	*Sprite
-	health uint
-}
-
-type Enemy struct {
-	*Sprite
-	followsPlayer bool
-}
-
-type Potion struct {
-	*Sprite
-	AmtHeal uint
-}
-
 type Game struct {
-	Player      *Player
-	enemies     []*Enemy
-	potions     []*Potion
-	tilemapJSON *TilemapJSON
+	Player       *characters.Player
+	enemies      []*characters.Enemy
+	potions      []*characters.Potion
+	tilemapJSON  *environment.TilemapJSON
+	tilemapImage *ebiten.Image
 }
 
 func (g *Game) Update() error {
@@ -59,7 +43,7 @@ func (g *Game) Update() error {
 	// }
 
 	for _, enemy := range g.enemies {
-		if enemy.followsPlayer {
+		if enemy.FollowsPlayer {
 			if enemy.X > g.Player.X {
 				enemy.X -= 1
 			} else if enemy.X < g.Player.X {
@@ -78,9 +62,36 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	screen.Fill(color.RGBA{120, 180, 255, 255})
-
+	// screen.Fill(color.RGBA{120, 180, 255, 255})
 	opts := &ebiten.DrawImageOptions{}
+
+	// loop over the layers
+
+	for _, layer := range g.tilemapJSON.Layers {
+		for index, id := range layer.Data {
+			x := index % layer.Width
+			y := index / layer.Width
+
+			x *= 16
+			y *= 16
+
+			srcX := (id - 1) % 22
+			srcY := (id - 1) / 22
+
+			srcX *= 16
+			srcY *= 16
+
+			opts.GeoM.Translate(float64(x), float64(y))
+
+			screen.DrawImage(
+				g.tilemapImage.SubImage(image.Rect(srcX, srcY, srcX+16, srcY+16)).(*ebiten.Image),
+				opts,
+			)
+
+			opts.GeoM.Reset()
+		}
+	}
+
 	opts.GeoM.Translate(g.Player.X, g.Player.Y)
 	// drawing our player
 	screen.DrawImage(g.Player.Img.SubImage(image.Rect(0, 0, 16, 16)).(*ebiten.Image), opts)
@@ -127,47 +138,57 @@ func main() {
 		log.Fatal(err)
 	}
 
-	tilemapJSON, err := NewTilemapJSON("assetes/resources/maps/spawn.json")
+	tilemapImg, _, err := ebitenutil.NewImageFromFile("assets/images/tilesets/TilesetFloor.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tilemapJSON, err := environment.NewTilemapJSON("assets/resources/maps/spawn.json")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	game := Game{
-		Player: &Player{
-			&Sprite{
+		Player: &characters.Player{
+			Sprite: &characters.Sprite{
 				Img: PlayerImg,
 				X:   160,
 				Y:   100,
 			},
-			100,
+			Health: 100,
 		},
 
-		enemies: []*Enemy{
+		enemies: []*characters.Enemy{
 			{
-				&Sprite{
+				Sprite: &characters.Sprite{
 					Img: EnemyImg,
 					X:   80,
 					Y:   100,
 				},
-				true,
+				FollowsPlayer: true,
 			},
 			{
-				&Sprite{
+				Sprite: &characters.Sprite{
 					Img: EnemyImg,
 					X:   80,
 					Y:   100,
 				},
-				false,
+				FollowsPlayer: false,
 			},
 		},
 
-		potions: []*Potion{
+		potions: []*characters.Potion{
 			{
-				&Sprite{
+				Sprite: &characters.Sprite{
 					Img: PotionImg,
 					X:   20,
 					Y:   20,
 				},
-				10,
+				AmtHeal: 10,
 			},
 		},
+		tilemapJSON:  tilemapJSON,
+		tilemapImage: tilemapImg,
 	}
 	// in the run game we insert the player image we got from new iamge from file into the actual RunGame struct
 	if err := ebiten.RunGame(&game); err != nil {
