@@ -3,11 +3,12 @@ package main
 import (
 	// "fmt"
 	"image"
+	"image/color"
 	"log"
 
 	"rpg/src/characters"
+	"rpg/src/core"
 	"rpg/src/environment"
-	// "image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -19,9 +20,18 @@ type Game struct {
 	potions      []*characters.Potion
 	tilemapJSON  *environment.TilemapJSON
 	tilemapImage *ebiten.Image
+	camera       *core.Camera
 }
 
 func (g *Game) Update() error {
+	g.camera.FollowTarget(g.Player.X+8, g.Player.Y+8, 320, 200)
+	g.camera.Constraint(
+		float64(g.tilemapJSON.Layers[0].Width)*16,
+		float64(g.tilemapJSON.Layers[0].Height)*16,
+		320,
+		200,
+	)
+
 	if ebiten.IsKeyPressed(ebiten.KeyRight) {
 		g.Player.X += 2
 	}
@@ -62,7 +72,7 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	// screen.Fill(color.RGBA{120, 180, 255, 255})
+	screen.Fill(color.RGBA{120, 180, 255, 255})
 	opts := &ebiten.DrawImageOptions{}
 
 	// loop over the layers
@@ -83,6 +93,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 			opts.GeoM.Translate(float64(x), float64(y))
 
+			opts.GeoM.Translate(g.camera.X, g.camera.Y)
+
 			screen.DrawImage(
 				g.tilemapImage.SubImage(image.Rect(srcX, srcY, srcX+16, srcY+16)).(*ebiten.Image),
 				opts,
@@ -93,12 +105,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 
 	opts.GeoM.Translate(g.Player.X, g.Player.Y)
+	opts.GeoM.Translate(g.camera.X, g.camera.Y)
 	// drawing our player
 	screen.DrawImage(g.Player.Img.SubImage(image.Rect(0, 0, 16, 16)).(*ebiten.Image), opts)
 	opts.GeoM.Reset()
 
 	for _, sprite := range g.enemies {
 		opts.GeoM.Translate(sprite.X, sprite.Y)
+		opts.GeoM.Translate(g.camera.X, g.camera.Y)
 		screen.DrawImage(sprite.Img.SubImage(image.Rect(0, 0, 16, 16)).(*ebiten.Image), opts)
 		opts.GeoM.Reset()
 	}
@@ -107,6 +121,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	for _, sprite := range g.potions {
 		opts.GeoM.Translate(sprite.X, sprite.Y)
+		opts.GeoM.Translate(g.camera.X, g.camera.Y)
 		screen.DrawImage(sprite.Img.SubImage(image.Rect(0, 0, 16, 16)).(*ebiten.Image), opts)
 		opts.GeoM.Reset()
 	}
@@ -152,7 +167,7 @@ func main() {
 		Player: &characters.Player{
 			Sprite: &characters.Sprite{
 				Img: PlayerImg,
-				X:   160,
+				X:   10,
 				Y:   100,
 			},
 			Health: 100,
@@ -189,6 +204,7 @@ func main() {
 		},
 		tilemapJSON:  tilemapJSON,
 		tilemapImage: tilemapImg,
+		camera:       core.NewCamera(0.0, 0.0),
 	}
 	// in the run game we insert the player image we got from new iamge from file into the actual RunGame struct
 	if err := ebiten.RunGame(&game); err != nil {
