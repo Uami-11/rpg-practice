@@ -20,6 +20,7 @@ type Game struct {
 	potions      []*characters.Potion
 	tilemapJSON  *environment.TilemapJSON
 	tilemapImage *ebiten.Image
+	tilesets     []environment.Tileset
 	camera       *core.Camera
 }
 
@@ -77,28 +78,24 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	// loop over the layers
 
-	for _, layer := range g.tilemapJSON.Layers {
+	for layerIndex, layer := range g.tilemapJSON.Layers {
 		for index, id := range layer.Data {
+			if id == 0 {
+				continue
+			}
 			x := index % layer.Width
 			y := index / layer.Width
 
 			x *= 16
 			y *= 16
 
-			srcX := (id - 1) % 22
-			srcY := (id - 1) / 22
-
-			srcX *= 16
-			srcY *= 16
+			img := g.tilesets[layerIndex].Img(id)
 
 			opts.GeoM.Translate(float64(x), float64(y))
 
 			opts.GeoM.Translate(g.camera.X, g.camera.Y)
 
-			screen.DrawImage(
-				g.tilemapImage.SubImage(image.Rect(srcX, srcY, srcX+16, srcY+16)).(*ebiten.Image),
-				opts,
-			)
+			screen.DrawImage(img, opts)
 
 			opts.GeoM.Reset()
 		}
@@ -163,6 +160,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	tilesets, err := tilemapJSON.GenTilesets()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	game := Game{
 		Player: &characters.Player{
 			Sprite: &characters.Sprite{
@@ -204,6 +206,7 @@ func main() {
 		},
 		tilemapJSON:  tilemapJSON,
 		tilemapImage: tilemapImg,
+		tilesets:     tilesets,
 		camera:       core.NewCamera(0.0, 0.0),
 	}
 	// in the run game we insert the player image we got from new iamge from file into the actual RunGame struct
