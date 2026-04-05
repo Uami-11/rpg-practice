@@ -41,16 +41,15 @@ func CheckCollisionVertical(sprite *characters.Sprite, colliders []image.Rectang
 }
 
 type Game struct {
-	Player                 *characters.Player
-	playerSpriteSheet      *spritesheet.SpriteSheet
-	playerRunningAnimation *animations.Animation
-	enemies                []*characters.Enemy
-	potions                []*characters.Potion
-	tilemapJSON            *environment.TilemapJSON
-	tilemapImage           *ebiten.Image
-	tilesets               []environment.Tileset
-	camera                 *core.Camera
-	colliders              []image.Rectangle
+	Player            *characters.Player
+	playerSpriteSheet *spritesheet.SpriteSheet
+	enemies           []*characters.Enemy
+	potions           []*characters.Potion
+	tilemapJSON       *environment.TilemapJSON
+	tilemapImage      *ebiten.Image
+	tilesets          []environment.Tileset
+	camera            *core.Camera
+	colliders         []image.Rectangle
 }
 
 func (g *Game) Update() error {
@@ -85,6 +84,11 @@ func (g *Game) Update() error {
 	g.Player.Y += g.Player.Dy
 
 	CheckCollisionVertical(g.Player.Sprite, g.colliders)
+
+	activeAnimation := g.Player.ActiveAnimation(int(g.Player.Dx), int(g.Player.Dy))
+	if activeAnimation != nil {
+		activeAnimation.Update()
+	}
 
 	// for _, potion := range g.potions {
 	// 	if g.Player.X < potion.X {
@@ -169,7 +173,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	opts.GeoM.Translate(g.Player.X, g.Player.Y)
 	opts.GeoM.Translate(g.camera.X, g.camera.Y)
 	// drawing our player
-	screen.DrawImage(g.Player.Img.SubImage(g.playerSpriteSheet.Rect(g.animationFrame)).(*ebiten.Image), opts)
+	playerFrame := 0
+	activeAnimation := g.Player.ActiveAnimation(int(g.Player.Dx), int(g.Player.Dy))
+	if activeAnimation != nil {
+		playerFrame = activeAnimation.Frame()
+	}
+	screen.DrawImage(g.Player.Img.SubImage(g.playerSpriteSheet.Rect(playerFrame)).(*ebiten.Image), opts)
 	opts.GeoM.Reset()
 
 	for _, sprite := range g.enemies {
@@ -240,6 +249,12 @@ func main() {
 				Y:   100,
 			},
 			Health: 100,
+			Animations: map[characters.PlayerState]*animations.Animation{
+				characters.Up:    animations.NewAnimation(5, 13, 4, 20.0),
+				characters.Down:  animations.NewAnimation(4, 12, 4, 20.0),
+				characters.Left:  animations.NewAnimation(6, 14, 4, 20.0),
+				characters.Right: animations.NewAnimation(7, 15, 4, 20.0),
+			},
 		},
 
 		playerSpriteSheet: playerSpriteSheet,
