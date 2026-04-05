@@ -8,7 +8,7 @@
  "margin":0,
  "name":"buildings",
  "spacing":0,
- "tilecount":3,
+ "tilecount":5,
  "tiledversion":"1.12.1",
  "tileheight":48,
  "tiles":[
@@ -29,6 +29,18 @@
          "image":"..\/..\/..\/images\/tilesets\/building3.png",
          "imageheight":48,
          "imagewidth":64
+        }, 
+        {
+         "id":3,
+         "image":"..\/..\/..\/images\/tilesets\/cutting-board.png",
+         "imageheight":16,
+         "imagewidth":32
+        }, 
+        {
+         "id":4,
+         "image":"..\/..\/..\/images\/tilesets\/frog.png",
+         "imageheight":48,
+         "imagewidth":32
         }],
  "tilewidth":64,
  "type":"tileset",

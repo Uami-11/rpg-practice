@@ -39,8 +39,8 @@ type UniformTileset struct {
 func (uTiles *UniformTileset) Img(id int) *ebiten.Image {
 	id -= uTiles.gid
 
-	srcX := (id - 1) % 22
-	srcY := (id - 1) / 22
+	srcX := (id) % 22
+	srcY := (id) / 22
 
 	srcX *= 16
 	srcY *= 16

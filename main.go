@@ -93,6 +93,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 			opts.GeoM.Translate(float64(x), float64(y))
 
+			opts.GeoM.Translate(0.0, -(float64(img.Bounds().Dy()) + 16))
+
 			opts.GeoM.Translate(g.camera.X, g.camera.Y)
 
 			screen.DrawImage(img, opts)
