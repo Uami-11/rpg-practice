@@ -1,6 +1,9 @@
 package characters
 
+import "rpg/components"
+
 type Enemy struct {
 	*Sprite
-	FollowsPlayer bool
+	FollowsPlayer   bool
+	CombatComponent *components.EnemyCombat
 }

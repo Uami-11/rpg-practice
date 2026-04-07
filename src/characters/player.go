@@ -1,6 +1,9 @@
 package characters
 
-import "rpg/animations"
+import (
+	"rpg/animations"
+	"rpg/components"
+)
 
 type PlayerState uint8
 
@@ -13,8 +16,9 @@ const (
 
 type Player struct {
 	*Sprite
-	Health     uint
-	Animations map[PlayerState]*animations.Animation
+	Health          uint
+	Animations      map[PlayerState]*animations.Animation
+	CombatComponent *components.BasicCombat
 }
 
 func (player *Player) ActiveAnimation(Dx, Dy int) *animations.Animation {
